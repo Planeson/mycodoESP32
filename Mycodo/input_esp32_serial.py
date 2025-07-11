@@ -26,8 +26,8 @@ measurements_dict = {
 # Input information
 INPUT_INFORMATION = {
     'input_name_unique': 'ESP32_SERIAL',
-    'input_manufacturer': 'ESP32',
-    'input_name': 'ESP32 Serial DHT22 + BMP280',
+    'input_manufacturer': '!Planeson',
+    'input_name': 'Atlas Scientific Hydroponic Kit',
     'input_library': 'pyserial',
     'measurements_name': 'Temperature/Humidity/Pressure',
     'measurements_dict': measurements_dict,
@@ -43,7 +43,7 @@ INPUT_INFORMATION = {
     'options_disabled': ['interface'],
 
     'dependencies_module': [
-        ('pip-pypi', 'pyserial', 'pyserial==3.5')
+        ('pip-pypi', 'serial', 'pyserial==3.5')
     ],
 
     'interfaces': ['UART'],
