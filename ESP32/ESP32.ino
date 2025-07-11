@@ -80,9 +80,9 @@ void thingspeak_send() {
     if (wifi_isconnected()) {
       int return_code = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
       if (return_code == 200) {                                                          //code for successful transmission
-        Serial.println("sent to thingspeak");
+        //Serial.println("sent to thingspeak");
       } else {
-        Serial.println("couldnt send to thingspeak");
+        //Serial.println("couldnt send to thingspeak");
       }
     }
   }
@@ -230,7 +230,7 @@ void step4() {
   }
 
   Serial.println();
-  pump_function(PUMP_BOARD, EZO_BOARD, COMPARISON_VALUE, PUMP_DOSE, IS_GREATER_THAN);
+  //pump_function(PUMP_BOARD, EZO_BOARD, COMPARISON_VALUE, PUMP_DOSE, IS_GREATER_THAN);
 }
 
 
