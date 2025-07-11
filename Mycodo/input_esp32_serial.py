@@ -1,3 +1,14 @@
+INPUT_INFORMATION = {
+    "input_name": "ESP32 Serial",
+    "input_description": "Parses RTD, PH, EC readings from ESP32 serial output.",
+    "input_author": "Your Name",
+    "input_version": "1.0",
+    "input_channels": [
+        {"name": "RTD", "unit": "°C"},
+        {"name": "PH", "unit": ""},
+        {"name": "EC", "unit": "uS/cm"}
+    ]
+}
 import re
 import serial
 from mycodo.inputs.base_input import Input
