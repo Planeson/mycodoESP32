@@ -35,7 +35,7 @@ INPUT_INFORMATION = {
     'url_datasheet': 'https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf',
 
     'options_enabled': [
-        'uart_device',
+        'uart_location',
         'uart_baud_rate',
         'period',
         'pre_output'
@@ -47,55 +47,8 @@ INPUT_INFORMATION = {
     ],
 
     'interfaces': ['UART'],
-    'uart_device': '/dev/ttyUSB0',
+    'uart_location': '/dev/ttyUSB0',
     'uart_baud_rate': 9600,
-
-    'custom_options': [
-        {
-            'id': 'serial_device',
-            'type': 'select',
-            'default_value': '/dev/ttyUSB0',
-            'options_select': [
-                ('/dev/ttyUSB0', '/dev/ttyUSB0'),
-                ('/dev/ttyUSB1', '/dev/ttyUSB1'),
-                ('/dev/ttyUSB2', '/dev/ttyUSB2'),
-                ('/dev/ttyUSB3', '/dev/ttyUSB3'),
-                ('/dev/ttyACM0', '/dev/ttyACM0'),
-                ('/dev/ttyACM1', '/dev/ttyACM1'),
-                ('/dev/ttyACM2', '/dev/ttyACM2'),
-                ('/dev/ttyACM3', '/dev/ttyACM3'),
-                ('COM1', 'COM1'),
-                ('COM2', 'COM2'),
-                ('COM3', 'COM3'),
-                ('COM4', 'COM4'),
-                ('COM5', 'COM5'),
-                ('COM6', 'COM6'),
-                ('COM7', 'COM7'),
-                ('COM8', 'COM8'),
-                ('COM9', 'COM9'),
-                ('COM10', 'COM10'),
-            ],
-            'name': lazy_gettext('Serial Device'),
-            'phrase': lazy_gettext('Select the serial device to connect to')
-        },
-        {
-            'id': 'baud_rate',
-            'type': 'select',
-            'default_value': 9600,
-            'options_select': [
-                (9600, '9600'),
-                (19200, '19200'),
-                (38400, '38400'),
-                (57600, '57600'),
-                (115200, '115200'),
-                (230400, '230400'),
-                (460800, '460800'),
-                (921600, '921600'),
-            ],
-            'name': lazy_gettext('Baud Rate'),
-            'phrase': lazy_gettext('Select the baud rate for serial communication')
-        }
-    ]
 }
 
 class InputModule(AbstractInput):
@@ -104,15 +57,8 @@ class InputModule(AbstractInput):
     def __init__(self, input_dev, testing=False):
         super(InputModule, self).__init__(input_dev, testing=testing, name=__name__)
 
-        # Use custom options if available, otherwise fall back to defaults
-        if hasattr(input_dev, 'custom_options') and input_dev.custom_options:
-            custom_options = input_dev.custom_options
-            self.uart_device = custom_options.get('serial_device', '/dev/ttyUSB0')
-            self.uart_baud_rate = int(custom_options.get('baud_rate', 9600))
-        else:
-            # Fallback to old method
-            self.uart_device = getattr(input_dev, 'uart_device', '/dev/ttyUSB0')
-            self.uart_baud_rate = getattr(input_dev, 'uart_baud_rate', 9600)
+        self.uart_device = getattr(input_dev, 'uart_location', '/dev/ttyUSB0')
+        self.uart_baud_rate = getattr(input_dev, 'uart_baud_rate', 9600)
 
         if not testing:
             self.setup_device()
@@ -128,9 +74,9 @@ class InputModule(AbstractInput):
             time.sleep(2)  # Give the device time to initialize
             # Clear any existing data in the buffer
             self.serial_device.reset_input_buffer()
-            self.logger.info(f"ESP32 serial connection established on {self.uart_device} at {self.uart_baud_rate} baud")
+            self.logger.info("ESP32 serial connection established")
         except Exception as e:
-            self.logger.error(f"Failed to establish serial connection on {self.uart_device}: {e}")
+            self.logger.error(f"Failed to establish serial connection: {e}")
             self.serial_device = None
 
     def get_measurement(self):
