@@ -88,54 +88,71 @@ class InputModule(AbstractInput):
         self.return_dict = copy.deepcopy(measurements_dict)
 
         try:
-            # Try to read data multiple times with a timeout
+            # flush input buffer to ensure no stale data
+            self.serial_device.reset_input_buffer()
+            time.sleep(1.5)  # Short delay to wait for new data
+
+            # Read all data, find last complete line
+            latest_line = None
             max_attempts = 10
             for attempt in range(max_attempts):
-                try:
-                    # Wait for data to be available
-                    if self.serial_device.in_waiting > 0:
-                        response = self.serial_device.readline().decode('utf-8').strip()
-                        self.logger.debug(f"Received (attempt {attempt + 1}): {response}")
+                if self.serial_device.in_waiting > 0:
+                    try:
+                        # Read a line
+                        line = self.serial_device.readline().decode('utf-8').strip()
+                        if line:  # If we got a non-empty line
+                            latest_line = line
+                            self.logger.debug(f"Read line (attempt {attempt + 1}): {line}")
+                            
+                            # Check if there's more data coming
+                            time.sleep(0.1)  # Small delay to see if more data arrives
+                            if self.serial_device.in_waiting == 0:
+                                # No more data, this is likely the latest
+                                break
+                    except UnicodeDecodeError:
+                        # Skip malformed data
+                        continue
+                else:
+                    # No data available, wait a bit
+                    time.sleep(0.1)
+            
+            if latest_line:
+                self.logger.debug(f"Latest complete line: {latest_line}")
+                
+                # Parse the response (expecting format: "RTD: 23.34 PH: 4.56 EC: 34.53")
+                if 'RTD:' in latest_line and 'PH:' in latest_line and 'EC:' in latest_line:
+                    try:
+                        # Extract values using split
+                        parts = latest_line.split()
+                        rtd_value = None
+                        ph_value = None
+                        ec_value = None
                         
-                        # Parse the response (expecting format: "RTD: 23.34 PH: 4.56 EC: 34.53")
-                        if 'RTD:' in response and 'PH:' in response and 'EC:' in response:
-                            try:
-                                # Extract values using split
-                                parts = response.split()
-                                rtd_value = None
-                                ph_value = None
-                                ec_value = None
-                                
-                                for i, part in enumerate(parts):
-                                    if part == 'RTD:' and i + 1 < len(parts):
-                                        rtd_value = float(parts[i + 1])
-                                    elif part == 'PH:' and i + 1 < len(parts):
-                                        ph_value = float(parts[i + 1])
-                                    elif part == 'EC:' and i + 1 < len(parts):
-                                        ec_value = float(parts[i + 1])
-                                
-                                if rtd_value is not None and ph_value is not None and ec_value is not None:
-                                    self.value_set(0, rtd_value)
-                                    self.value_set(1, ph_value)
-                                    self.value_set(2, ec_value)
-                                    
-                                    self.logger.info(f"Successfully parsed - RTD: {rtd_value}, PH: {ph_value}, EC: {ec_value}")
-                                    return self.return_dict
-                                else:
-                                    self.logger.warning("Could not parse all values from response")
-                                    
-                            except ValueError as e:
-                                self.logger.error(f"Error parsing values: {e}")
+                        for i, part in enumerate(parts):
+                            if part == 'RTD:' and i + 1 < len(parts):
+                                rtd_value = float(parts[i + 1])
+                            elif part == 'PH:' and i + 1 < len(parts):
+                                ph_value = float(parts[i + 1])
+                            elif part == 'EC:' and i + 1 < len(parts):
+                                ec_value = float(parts[i + 1])
+                        
+                        if rtd_value is not None and ph_value is not None and ec_value is not None:
+                            self.value_set(0, rtd_value)
+                            self.value_set(1, ph_value)
+                            self.value_set(2, ec_value)
+                            
+                            self.logger.info(f"Successfully parsed - RTD: {rtd_value}, PH: {ph_value}, EC: {ec_value}")
+                            return self.return_dict
                         else:
-                            self.logger.debug(f"Invalid data format received: {response}")
-                    else:
-                        # No data available, wait a bit and try again
-                        time.sleep(0.1)
-                        
-                except Exception as e:
-                    self.logger.error(f"Error reading line: {e}")
-                    
-            self.logger.error(f"No valid data received after {max_attempts} attempts")
+                            self.logger.warning("Could not parse all values from response")
+                            
+                    except ValueError as e:
+                        self.logger.error(f"Error parsing values: {e}")
+                else:
+                    self.logger.debug(f"Invalid data format received: {latest_line}")
+            else:
+                self.logger.error("No valid data received")
+                
             return None
 
         except Exception as e:
