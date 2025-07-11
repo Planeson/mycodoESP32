@@ -14,12 +14,12 @@ measurements_dict = {
         'unit': 'C'
     },
     1: {
-        'measurement': 'humidity',
-        'unit': 'percent'
+        'measurement': 'ion_concentration',
+        'unit': 'pH'
     },
     2: {
-        'measurement': 'pressure',
-        'unit': 'Pa'
+        'measurement': 'electrical_conductivity',
+        'unit': 'μS_cm'
     }
 }
 
@@ -29,7 +29,7 @@ INPUT_INFORMATION = {
     'input_manufacturer': '!Planeson',
     'input_name': 'Atlas Scientific Hydroponic Kit',
     'input_library': 'pyserial',
-    'measurements_name': 'Temperature/Humidity/Pressure',
+    'measurements_name': 'Temperature/pH/Electrical Conductivity',
     'measurements_dict': measurements_dict,
     'url_manufacturer': 'https://www.espressif.com/en/products/socs/esp32',
     'url_datasheet': 'https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf',
@@ -43,7 +43,7 @@ INPUT_INFORMATION = {
     'options_disabled': ['interface'],
 
     'dependencies_module': [
-        ('pip-pypi', 'serial', 'pyserial==3.5')
+        ('pip-pypi', 'serial', 'pyserial>=3.0')
     ],
 
     'interfaces': ['UART'],
@@ -85,33 +85,43 @@ class InputModule(AbstractInput):
         self.return_dict = copy.deepcopy(measurements_dict)
 
         try:
-            # Request data from ESP32
-            self.serial_device.write(b'READ\n')
-            time.sleep(0.1)
-            
-            # Read response
+            # Read response from ESP32
             if self.serial_device.in_waiting:
                 response = self.serial_device.readline().decode('utf-8').strip()
                 self.logger.debug(f"Received: {response}")
                 
-                # Parse the response (expecting format: "temp,humidity,pressure")
-                if ',' in response:
-                    values = response.split(',')
-                    if len(values) >= 3:
-                        temperature = float(values[0])
-                        humidity = float(values[1])
-                        pressure = float(values[2])
+                # Parse the response (expecting format: "RTD: 23.34 PH: 4.56 EC: 34.53")
+                if 'RTD:' in response and 'PH:' in response and 'EC:' in response:
+                    try:
+                        # Extract values using split
+                        parts = response.split()
+                        rtd_value = None
+                        ph_value = None
+                        ec_value = None
                         
-                        self.value_set(0, temperature)
-                        self.value_set(1, humidity)
-                        self.value_set(2, pressure)
+                        for i, part in enumerate(parts):
+                            if part == 'RTD:' and i + 1 < len(parts):
+                                rtd_value = float(parts[i + 1])
+                            elif part == 'PH:' and i + 1 < len(parts):
+                                ph_value = float(parts[i + 1])
+                            elif part == 'EC:' and i + 1 < len(parts):
+                                ec_value = float(parts[i + 1])
                         
-                        return self.return_dict
-                    else:
-                        self.logger.error("Invalid data format received")
+                        if rtd_value is not None and ph_value is not None and ec_value is not None:
+                            self.value_set(0, rtd_value)
+                            self.value_set(1, ph_value)
+                            self.value_set(2, ec_value)
+                            
+                            return self.return_dict
+                        else:
+                            self.logger.error("Could not parse all values from response")
+                            return None
+                            
+                    except ValueError as e:
+                        self.logger.error(f"Error parsing values: {e}")
                         return None
                 else:
-                    self.logger.error("No valid data received")
+                    self.logger.error("Invalid data format received")
                     return None
             else:
                 self.logger.error("No data available from ESP32")
