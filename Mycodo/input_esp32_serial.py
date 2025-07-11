@@ -3,9 +3,9 @@ from flask_babel import lazy_gettext
 
 # Measurements
 measurements_dict = {
-    0: {'measurement': 'rtd', 'unit': '°C'},
-    1: {'measurement': 'ph', 'unit': ''},
-    2: {'measurement': 'ec', 'unit': 'uS/cm'}
+    0: {'measurement': 'temperature', 'unit': 'C'},
+    1: {'measurement': 'ion_concentration', 'unit': 'pH'},
+    2: {'measurement': 'electrical_conductivity', 'unit': 'uS_cm'}
 }
 
 # Input information
@@ -14,7 +14,7 @@ INPUT_INFORMATION = {
     'input_manufacturer': 'Custom',
     'input_name': 'ESP32 Hydroponics Serial',
     'input_library': 'pyserial',
-    'measurements_name': 'RTD, PH, EC',
+    'measurements_name': 'Temperature, pH, Electrical Conductivity',
     'measurements_dict': measurements_dict,
     'url_manufacturer': '',
     'url_datasheet': '',
