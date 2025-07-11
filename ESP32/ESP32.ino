@@ -140,6 +140,7 @@ void loop() {
     Thingspeak_seq.run();
   }
 
+  /*
   // UART sensor query from RPi
   if (Serial.available()) {
     String uart_cmd = Serial.readStringUntil('\n');
@@ -160,6 +161,7 @@ void loop() {
       Serial.println("ERR: Unknown sensor");
     }
   }
+  */
 }
 
 //function that controls the pumps activation and output
