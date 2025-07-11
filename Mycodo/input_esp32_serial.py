@@ -26,7 +26,7 @@ INPUT_INFORMATION = {
     ],
     'options_disabled': ['interface'],
     'dependencies_module': [
-        ('pip-pypi', 'pyserial', 'pyserial>=3.0')
+        ('pip-pypi', 'pyserial')
     ],
     'interfaces': ['UART'],
     'uart_location': '/dev/ttyUSB0',
