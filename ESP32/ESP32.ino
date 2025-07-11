@@ -154,9 +154,7 @@ void loop() {
     } else if (uart_cmd == "SENSOR3") {
       Serial.print("RTD:");
       Serial.println(RTD.get_last_received_reading(), 2);
-    } else if (uart_cmd == "SENSOR4") {
-      Serial.print("PMP:");
-      Serial.println(PMP.get_last_received_reading(), 2);
+    // SENSOR4/PMP removed since PMP is not present
     } else {
       Serial.println("ERR: Unknown sensor");
     }
